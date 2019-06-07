@@ -1,8 +1,8 @@
 
-#include "utility.h"
+#include "utility.hpp"
 #include <functional>
 #include <cstddef>
-#include "exception.h"
+#include "exception.hpp"
 #include <cstdio>
 namespace sjtu {
     template <class Key, class Value, class Compare = std::less<Key> >
