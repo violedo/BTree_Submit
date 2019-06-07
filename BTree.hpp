@@ -604,10 +604,10 @@ namespace sjtu {
 				par_node par;
 				read_node(&par, leaf.par, sizeof(par_node));
 				par.keynchil[0].first = key;
+                ++leaf.num;
+                ++par.num;
 				write_node(&leaf, leaf.offset, sizeof(leaf_node));
 				write_node(&par, par.offset, sizeof(par_node));
-				++leaf.num;
-				++par.num;
 				++info.total_size;
 				iterator it;
 				pair<iterator, OperationResult> ans;
@@ -725,15 +725,13 @@ namespace sjtu {
         // Return the value refer to the Key(key)
         Value at(const Key& key){
 			off_t leafoff = find_pos(key, info.root);
-			if (!leafoff)
-				throw;
 			leaf_node leaf;
 			read_node(&leaf, leafoff, sizeof(leaf_node));
 			int i;
 			for (i = 0; i < leaf.num; ++i)
 				if (leaf.data[i].first == key)
 					return leaf.data[i].second;
-			throw;
+
         }
         /**
          * Returns the number of elements with key
