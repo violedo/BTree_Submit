@@ -1,25 +1,25 @@
 
-#include "utility.hpp"
+#include "utility.h"
 #include <functional>
 #include <cstddef>
-#include "exception.hpp"
+#include "exception.h"
 #include <cstdio>
 namespace sjtu {
     template <class Key, class Value, class Compare = std::less<Key> >
     class BTree {
 
-	pubilc:
-		typedef pair<const Key, Value> value_type;
+	public:
+		typedef pair<Key, Value> value_type;
 		typedef size_t off_t;
 		typedef pair<Key, off_t> Keynchil;
 
 	private:
 	
-		constexpr off_t node_size = 4096;
-		constexpr off_t key_size = sizeof(Key);
-		constexpr off_t value_size = sizeof(Value);
-		constexpr int L = (node_size -sizeof(int)-sizeof(size_t)*4) / sizeof(key_size + value_size) - 1;
-		cons+texpr int M = (node_size - sizeof(bool) - sizeof(int) - sizeof(size_t) * 2) / (sizeof(Keynchil)) - 1;
+		static constexpr off_t node_size = 4096;
+		static constexpr off_t key_size = sizeof(Key);
+		static constexpr off_t value_size = sizeof(Value);
+		static constexpr int L = (node_size -sizeof(int)-sizeof(size_t)*4) / sizeof(key_size + value_size) - 1;
+		static constexpr int M = (node_size - sizeof(bool) - sizeof(int) - sizeof(size_t) * 2) / (sizeof(Keynchil)) - 1;
 
 		struct info_node {
 			off_t root=0;
@@ -93,7 +93,10 @@ namespace sjtu {
 				if (key < par.keynchil[i].first)
 					break;
 			for (int j = par.num; j > i; --j)
-				par.keynchil[j] = par.keynchil[j - 1];
+            {
+			    par.keynchil[j].first = par.keynchil[j - 1].first;
+                par.keynchil[j].second = par.keynchil[j - 1].second;
+            }
 			++par.num;
 			par.keynchil[i].first = key;
 			par.keynchil[i].second = chil;
@@ -125,7 +128,8 @@ namespace sjtu {
 			}
 			for (int i = 0; i < newleaf.num; ++i)
 			{
-				newleaf.data[i] = oldleaf.data[i + oldleaf.num];
+				newleaf.data[i].first = oldleaf.data[i + oldleaf.num].first;
+                newleaf.data[i].second = oldleaf.data[i + oldleaf.num].second;
 			}
 			par_node p;
 			read_node(&p, oldleaf.par, sizeof(par_node));
@@ -145,7 +149,10 @@ namespace sjtu {
 			newp.offset = info.eof;
 			info.eof += sizeof(par_node);
 			for (int i = 0; i < newp.num; ++i)
-				newp.keynchil[i] = p.keynchil[i + p.num];
+            {
+			    newp.keynchil[i].first = p.keynchil[i + p.num].first;
+                newp.keynchil[i].second = p.keynchil[i + p.num].second;
+            }
 			if (newp.type)
 			{
 				leaf_node tmp;
@@ -414,13 +421,13 @@ namespace sjtu {
 			read_node(&tmp, par.keynchil[i+1].second, sizeof(par_node));
 			
 			for (int i = 0; i < tmp.num; ++i)
-				p.keynchil[i + leaf.num] = tmp.keynchil[i];
+				p.keynchil[i + p.num] = tmp.keynchil[i];
 			p.num += tmp.num;
 			for (int j = i + 1; j < par.num - 1; ++j)
 				par.keynchil[j] = par.keynchil[j + 1];
 			--par.num;
 			write_node(&par, par.offset, sizeof(par_node));
-			write_node(&leaf, leaf.offset, sizeof(leaf_node));
+			write_node(&p, p.offset, sizeof(par_node));
 			return 1;
 		}
 
@@ -554,7 +561,7 @@ namespace sjtu {
 			}
 			else {
 				fseek(fp, 0, 0);
-				fread(info, 1, sizeof(info_node), fp);
+				fread(&info, 1, sizeof(info_node), fp);
 			}
 			file_open = 1;
         }
@@ -612,8 +619,8 @@ namespace sjtu {
 			if (!leafoff)
 			{
 				leaf_node leaf;
-				read_node(leaf, info.head, sizeof(leaf_node));
-				if (leaf.data[0].key == key)
+				read_node(&leaf, info.head, sizeof(leaf_node));
+				if (leaf.data[0].first == key)
 				{
 					iterator it;
 					pair<iterator, OperationResult> ans;
@@ -622,11 +629,14 @@ namespace sjtu {
 					return ans;
 				}
 				for (int i = leaf.num; i > 0; --i)
-					leaf.data[i] = leaf.data[i - 1];
+                {
+				    leaf.data[i].first = leaf.data[i - 1].first;
+                    leaf.data[i].second = leaf.data[i - 1].second;
+                }
 				leaf.data[0].first = key;
 				leaf.data[0].second = value;
 				++leaf.num;
-				++info.num;
+				++info.total_size;
 				write_node(&info, 0, sizeof(info_node));
 				if (leaf.num <= L)
 					write_node(&leaf, leaf.offset, sizeof(leaf_node));
@@ -640,14 +650,14 @@ namespace sjtu {
 				while (par)
 				{
 					read_node(&p, par, sizeof(par_node));
-					p.keynchil[0] = key;
+					p.keynchil[0].first = key;
 					write_node(&p, par, sizeof(par_node));
 					par = p.par;
 				}
 				return ans;
 			}
 			leaf_node leaf;
-			read_node(leaf, leafoff, sizeof(leaf_node));
+			read_node(&leaf, leafoff, sizeof(leaf_node));
 			int i;
 			for (i = 0; i < leaf.num; ++i)
 			{
@@ -663,7 +673,10 @@ namespace sjtu {
 					break;
 			}
 			for (int j = leaf.num; j > i; --j)
-				leaf.data[j] = leaf.data[j - 1];
+            {
+			    leaf.data[j].first = leaf.data[j - 1].first;
+                leaf.data[j].second = leaf.data[j - 1].second;
+            }
 			leaf.data[i].first = key;
 			leaf.data[i].second = value;
 			++leaf.num;
@@ -704,7 +717,7 @@ namespace sjtu {
 		}
         // Clear the BTree
         void clear() {
-			fp = fopen(bpt.dat, "w");
+			fp = fopen("bpt.dat", "w");
 			fclose(fp);
 			fp = fopen("bpt.dat", "rb+");
 			build_tree();
@@ -747,8 +760,14 @@ namespace sjtu {
          *   If no such element is found, past-the-end (see end()) iterator is
          * returned.
          */
-        iterator find(const Key& key) {}
-        const_iterator find(const Key& key) const {}
+        iterator find(const Key& key) {
+            iterator it;
+            return it;
+        }
+        const_iterator find(const Key& key) const {
+            const_iterator it;
+            return it;
+        }
     };
 }  // namespace sjtu
 
