@@ -1,8 +1,8 @@
 
-#include "utility.hpp"
+#include "utility.h"
 #include <functional>
 #include <cstddef>
-#include "exception.hpp"
+#include "exception.h"
 #include <cstdio>
 namespace sjtu {
     template <class Key, class Value, class Compare = std::less<Key> >
@@ -48,7 +48,7 @@ namespace sjtu {
 		FILE* fp=NULL;
 		bool file_open=0;
 		info_node info;
-
+		bool file_exist=0;
 
 		void read_node(void *buffer, off_t offset,size_t buff_size)
 		{
@@ -552,18 +552,19 @@ namespace sjtu {
         };
         // Default Constructor and Copy Constructor
         BTree() {
-			if (file_open) return;
-			fp = fopen("bpt.dat", "rb+");
-			if (!fp)
-			{
-				fp = fopen("bpt.dat", "wb+");
-				build_tree();
-			}
-			else {
-				fseek(fp, 0, 0);
-				fread(&info, 1, sizeof(info_node), fp);
-			}
-			file_open = 1;
+            if (file_exist){
+                if (file_open) return;
+                fp = fopen("bpt.dat", "rb+");
+                read_node(&info,0,sizeof(info_node));
+                file_open=1;
+                return;
+            }
+            fp = fopen("bpt.dat", "w");
+			fclose(fp);
+			fp=fopen("bpt.dat","rb+");
+			read_node(&info,0,sizeof(info_node));
+			file_open=1;
+			file_exist = 1;
         }
         BTree(const BTree& other) {
 			fp = fopen("bpt.dat", "rb+");
