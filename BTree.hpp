@@ -563,6 +563,8 @@ namespace sjtu {
 	    fclose(fp);
 	    fp=fopen("bpt.dat","rb+");
 	    build_tree();
+		file_open=1;
+		file_exist=1;
         }
         BTree(const BTree& other) {
 			fp = fopen("bpt.dat", "rb+");
