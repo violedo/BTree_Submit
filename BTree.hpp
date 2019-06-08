@@ -190,12 +190,12 @@ namespace sjtu {
 				write_node(&p, p.offset, sizeof(par_node));
 				write_node(&newp, newp.offset, sizeof(par_node));
 				write_node(&nroot, nroot.offset, sizeof(par_node));
-				write_node(&info, 0, sizeof(par_node));
+				write_node(&info, 0, sizeof(info_node));
 			}
 			else {
 				write_node(&p, p.offset, sizeof(par_node));
 				write_node(&newp, newp.offset, sizeof(par_node));
-				write_node(&info, 0, sizeof(par_node));
+				write_node(&info, 0, sizeof(info_node));
 				par_node par;
 				read_node(&par, p.par, sizeof(par_node));
 				add_to_par(newp.offset, newp.keynchil[0].first, par);
@@ -618,6 +618,7 @@ namespace sjtu {
 				pair<iterator, OperationResult> ans;
 				ans.first = it;
 				ans.second = Success;
+				//test(info.root);
 				return ans;
 			}
 			off_t leafoff = find_pos(key, info.root);
@@ -631,6 +632,7 @@ namespace sjtu {
 					pair<iterator, OperationResult> ans;
 					ans.first = it;
 					ans.second = Fail;
+                    //test(info.root);
 					return ans;
 				}
 				for (int i = leaf.num; i > 0; --i)
@@ -659,7 +661,7 @@ namespace sjtu {
 				pair<iterator, OperationResult> ans;
 				ans.first = it;
 				ans.second = Success;
-
+                //test(info.root);
 				return ans;
 			}
 			leaf_node leaf;
@@ -673,6 +675,7 @@ namespace sjtu {
 					pair<iterator, OperationResult> ans;
 					ans.first = it;
 					ans.second = Fail;
+                    //test(info.root);
 					return ans;
 				}
 				if (key < leaf.data[i].first)
@@ -695,6 +698,7 @@ namespace sjtu {
 			if (leaf.num > L)
 				split_leaf(leaf);
 			else write_node(&leaf, leaf.offset, sizeof(leaf_node));
+            //test(info.root);
 			return ans;
 
         }
@@ -771,6 +775,31 @@ namespace sjtu {
         const_iterator find(const Key& key) const {
             const_iterator it;
             return it;
+        }
+
+        void test(off_t paroff)
+        {
+            par_node par;
+            read_node(&par,paroff,sizeof(par_node));
+            for (int i=0;i<par.num;++i)
+                std::cout<<par.keynchil[i].first<<' '<<par.keynchil[i].second<<"  ";
+            std::cout<<'\n';
+            if (par.type)
+            {
+                leaf_node leaf;
+                for (int i=0;i<par.num;++i)
+                {
+                    std::cout<<"    ";
+                    read_node(&leaf,par.keynchil[i].second, sizeof(leaf_node));
+                    for (int i=0;i<leaf.num;++i)
+                        std::cout<<leaf.data[i].first<<' '<<leaf.data[i].second<<"  ";
+                    std::cout<<'\n';
+                }
+            }
+            else {
+                for (int i=0;i<par.num;++i)
+                    test(par.keynchil[i].second);
+            }
         }
     };
 }  // namespace sjtu
