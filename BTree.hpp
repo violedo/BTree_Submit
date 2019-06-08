@@ -18,8 +18,8 @@ namespace sjtu {
 		static constexpr off_t node_size = 4096;
 		static constexpr off_t key_size = sizeof(Key);
 		static constexpr off_t value_size = sizeof(Value);
-		static constexpr int L = 200;//(node_size -sizeof(int)-sizeof(size_t)*4) / sizeof(key_size + value_size) - 1;
-		static constexpr int M = 200;//(node_size - sizeof(bool) - sizeof(int) - sizeof(size_t) * 2) / (sizeof(Keynchil)) - 1;
+		static constexpr int L = 4;//(node_size -sizeof(int)-sizeof(size_t)*4) / sizeof(key_size + value_size) - 1;
+		static constexpr int M = 4;//(node_size - sizeof(bool) - sizeof(int) - sizeof(size_t) * 2) / (sizeof(Keynchil)) - 1;
 
 		struct info_node {
 			off_t root=0;
@@ -613,6 +613,7 @@ namespace sjtu {
 				write_node(&leaf, leaf.offset, sizeof(leaf_node));
 				write_node(&par, par.offset, sizeof(par_node));
 				++info.total_size;
+				write_node(&info,0,sizeof(info_node));
 				iterator it;
 				pair<iterator, OperationResult> ans;
 				ans.first = it;
@@ -642,6 +643,15 @@ namespace sjtu {
 				++leaf.num;
 				++info.total_size;
 				write_node(&info, 0, sizeof(info_node));
+                par_node p;
+                off_t par=leaf.par;
+                while (par)
+                {
+                    read_node(&p, par, sizeof(par_node));
+                    p.keynchil[0].first = key;
+                    write_node(&p, par, sizeof(par_node));
+                    par = p.par;
+                }
 				if (leaf.num <= L)
 					write_node(&leaf, leaf.offset, sizeof(leaf_node));
 				else split_leaf(leaf);
@@ -649,15 +659,7 @@ namespace sjtu {
 				pair<iterator, OperationResult> ans;
 				ans.first = it;
 				ans.second = Success;
-				par_node p;
-				off_t par;
-				while (par)
-				{
-					read_node(&p, par, sizeof(par_node));
-					p.keynchil[0].first = key;
-					write_node(&p, par, sizeof(par_node));
-					par = p.par;
-				}
+
 				return ans;
 			}
 			leaf_node leaf;
