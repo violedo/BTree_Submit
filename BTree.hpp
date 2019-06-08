@@ -18,8 +18,8 @@ namespace sjtu {
 		static constexpr off_t node_size = 4096;
 		static constexpr off_t key_size = sizeof(Key);
 		static constexpr off_t value_size = sizeof(Value);
-		static constexpr int L = (node_size -sizeof(int)-sizeof(size_t)*4) / sizeof(key_size + value_size) - 1;
-		static constexpr int M = (node_size - sizeof(bool) - sizeof(int) - sizeof(size_t) * 2) / (sizeof(Keynchil)) - 1;
+		static constexpr int L = 4;//(node_size -sizeof(int)-sizeof(size_t)*4) / sizeof(key_size + value_size) - 1;
+		static constexpr int M = 4;//(node_size - sizeof(bool) - sizeof(int) - sizeof(size_t) * 2) / (sizeof(Keynchil)) - 1;
 
 		struct info_node {
 			off_t root=0;
@@ -552,6 +552,9 @@ namespace sjtu {
         };
         // Default Constructor and Copy Constructor
         BTree() {
+            fp=nullptr;
+            fp=fopen("bpt.dat","rb+");
+            file_exist=(fp!= nullptr);
             if (file_exist){
                 if (file_open) return;
                 fp = fopen("bpt.dat", "rb+");
